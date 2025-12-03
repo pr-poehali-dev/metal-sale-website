@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+interface PriceItem {
+  id: number;
+  name: string;
+  specs: string;
+  price: string;
+  unit: string;
+}
 
 const Index = () => {
   const { toast } = useToast();
@@ -16,22 +31,30 @@ const Index = () => {
     email: '',
     message: ''
   });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [priceList, setPriceList] = useState<PriceItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { name: 'Листовой металл', icon: 'Square', description: 'Листы, рулоны, плиты' },
-    { name: 'Трубы', icon: 'Circle', description: 'Круглые, профильные, бесшовные' },
-    { name: 'Арматура', icon: 'Grid3x3', description: 'Стержневая, композитная' },
-    { name: 'Профили', icon: 'Columns3', description: 'Балки, швеллеры, уголки' }
-  ];
-
-  const priceList = [
-    { name: 'Лист стальной 3мм', specs: '1500x6000 мм, Ст3', price: '52 500', unit: 'тонна' },
-    { name: 'Труба профильная', specs: '40x40x2 мм', price: '48 200', unit: 'тонна' },
-    { name: 'Арматура А500С', specs: 'Ø12 мм', price: '54 800', unit: 'тонна' },
-    { name: 'Швеллер горячекатаный', specs: '№10, 12м', price: '56 100', unit: 'тонна' },
-    { name: 'Лист оцинкованный', specs: '1250x2500, 0.5мм', price: '68 900', unit: 'тонна' },
-    { name: 'Уголок равнополочный', specs: '50x50x5 мм', price: '51 300', unit: 'тонна' }
-  ];
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const response = await fetch('https://functions.poehali.dev/922db43d-c6fa-4a86-8868-248e9c480c7d');
+        const data = await response.json();
+        setCategories(data.categories || []);
+        setPriceList(data.priceList || []);
+      } catch (error) {
+        console.error('Failed to load catalog:', error);
+        toast({
+          title: "Ошибка загрузки",
+          description: "Не удалось загрузить каталог",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCatalog();
+  }, [toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,19 +103,25 @@ const Index = () => {
             <p className="text-muted-foreground">Широкий ассортимент металлопроката от производителей</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category, idx) => (
-              <Card key={idx} className="hover:border-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 cursor-pointer group">
-                <CardHeader>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-3 bg-primary/10 rounded group-hover:bg-primary/20 transition-colors">
-                      <Icon name={category.icon as any} size={28} className="text-primary" />
+            {loading ? (
+              <div className="col-span-4 text-center py-12 text-muted-foreground">Загрузка каталога...</div>
+            ) : categories.length === 0 ? (
+              <div className="col-span-4 text-center py-12 text-muted-foreground">Нет категорий</div>
+            ) : (
+              categories.map((category) => (
+                <Card key={category.id} className="hover:border-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 cursor-pointer group">
+                  <CardHeader>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-3 bg-primary/10 rounded group-hover:bg-primary/20 transition-colors">
+                        <Icon name={category.icon as any} size={28} className="text-primary" />
+                      </div>
                     </div>
-                  </div>
-                  <CardTitle className="text-xl">{category.name}</CardTitle>
-                  <CardDescription>{category.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+                    <CardTitle className="text-xl">{category.name}</CardTitle>
+                    <CardDescription>{category.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -120,14 +149,24 @@ const Index = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {priceList.map((item, idx) => (
-                      <tr key={idx} className="border-b border-border hover:bg-muted/20 transition-colors">
-                        <td className="p-4 font-medium">{item.name}</td>
-                        <td className="p-4 text-muted-foreground">{item.specs}</td>
-                        <td className="p-4 text-right text-primary font-semibold">{item.price}</td>
-                        <td className="p-4 text-center text-muted-foreground">{item.unit}</td>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-muted-foreground">Загрузка...</td>
                       </tr>
-                    ))}
+                    ) : priceList.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-muted-foreground">Нет данных</td>
+                      </tr>
+                    ) : (
+                      priceList.map((item) => (
+                        <tr key={item.id} className="border-b border-border hover:bg-muted/20 transition-colors">
+                          <td className="p-4 font-medium">{item.name}</td>
+                          <td className="p-4 text-muted-foreground">{item.specs}</td>
+                          <td className="p-4 text-right text-primary font-semibold">{parseFloat(item.price).toLocaleString('ru-RU')}</td>
+                          <td className="p-4 text-center text-muted-foreground">{item.unit}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
