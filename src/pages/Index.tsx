@@ -71,9 +71,12 @@ const Index = () => {
       <section className="relative h-[600px] flex items-center justify-center overflow-hidden metal-texture grid-pattern">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background"></div>
         <div className="container mx-auto px-4 relative z-10 text-center animate-fade-in">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Icon name="Cog" size={48} className="text-primary animate-[spin_20s_linear_infinite]" />
-            <h1 className="text-6xl font-bold text-foreground tracking-tight">МЕТАЛЛОПРОКАТ</h1>
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Icon name="Cog" size={48} className="text-primary animate-[spin_20s_linear_infinite]" />
+              <h1 className="text-6xl font-bold text-foreground tracking-tight">ООО "Прогресс"</h1>
+            </div>
+            <p className="text-3xl font-semibold text-muted-foreground tracking-wide">МЕТАЛЛОПРОКАТ</p>
           </div>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Поставки металлопродукции для промышленности и строительства
